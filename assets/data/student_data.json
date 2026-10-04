@@ -26,13 +26,13 @@
       "code": "MOB04",
       "title": "Navigation",
       "credits": 2,
-      "status": "planned"
+      "status": "planned."
     },
     {
       "code": "MOB05",
       "title": "State Management",
       "credits": 3,
-      "status": "planned"
+      "status": "planned."
     }
   ]
 }
