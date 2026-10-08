@@ -3,21 +3,20 @@ import 'package:provider/provider.dart';
 
 import 'models/course.dart';
 import 'providers/course_provider.dart';
+import 'repositories/course_repository.dart';
 import 'services/course_service.dart';
 
 const String studentName = 'I Gede Pradhana Subawa Deningrat';
 const String studentId = '2415051030';
 
 // ==================== DATA COURSE ====================
-// Data course TIDAK lagi hardcoded di sini. Data diambil dari
-// assets/data/student_data.json.
+// Data course diambil dari assets/data/student_data.json.
 //
-// TAHAP 9: proses membaca JSON (rootBundle.loadString dan
-// jsonDecode) SUDAH DIPINDAH dari main.dart ke CourseService
-// (lib/services/course_service.dart). main.dart tidak lagi
-// mengimpor dart:convert maupun rootBundle. Pemanggilan service
-// ini nantinya akan dipindah ke CourseRepository (Tahap 10) dan
-// CourseProvider (Tahap 11) agar tidak dipanggil langsung dari UI.
+// TAHAP 9: proses membaca JSON dipindah ke CourseService.
+// TAHAP 10: main.dart tidak lagi memanggil CourseService langsung,
+// melainkan lewat CourseRepository (UI -> Repository -> Service).
+// Pemanggilan repository ini nantinya akan dipindah ke
+// CourseProvider (Tahap 11).
 
 void main() {
   // ==================== TAHAP 6 ====================
@@ -72,9 +71,9 @@ class MyApp extends StatelessWidget {
 // TAHAP 8: `courses` bertipe List<Course> (model), bukan
 // List<Map<String, dynamic>> lagi.
 //
-// TAHAP 9: data course dimuat lewat CourseService. MainNavigationPage
-// hanya memanggil _courseService.loadCourses() dan menerima
-// List<Course> jadi; ia tidak tahu lagi bahwa sumbernya JSON.
+// TAHAP 9-10: data course dimuat lewat CourseRepository, yang
+// memakai CourseService. MainNavigationPage tidak tahu lagi bahwa
+// sumbernya JSON.
 //
 // MainNavigationPage tetap menjadi tempat courses dimuat, supaya
 // hanya ada SATU proses loading untuk seluruh app.
@@ -91,10 +90,11 @@ class _MainNavigationPageState
     extends State<MainNavigationPage> {
   int currentIndex = 0;
 
-  // TAHAP 9: service untuk mengambil data course.
+  // TAHAP 10: repository menerima CourseService lewat constructor.
   // Sementara dibuat langsung di sini; baru akan dipindah ke
-  // CourseRepository (Tahap 10) dan CourseProvider (Tahap 11).
-  final CourseService _courseService = CourseService();
+  // CourseProvider (Tahap 11).
+  final CourseRepository _courseRepository =
+      CourseRepository(CourseService());
 
   // Data course hasil load (sudah berupa object Course), dan
   // status loading-nya.
@@ -110,9 +110,8 @@ class _MainNavigationPageState
 
   Future<void> _loadCourses() async {
     try {
-      // TAHAP 9: parsing JSON + pembuatan object Course sekarang
-      // dilakukan di dalam CourseService, bukan di sini.
-      final result = await _courseService.loadCourses();
+      // TAHAP 10: ambil data lewat repository, bukan service.
+      final result = await _courseRepository.getCourses();
 
       if (!mounted) {
         return;
