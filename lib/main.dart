@@ -323,7 +323,8 @@ class _CoursesPageState extends State<CoursesPage> {
 }
 
 // ==================== INTERACTION CARD ====================
-
+// I Gede Pradahan Subawa Deningrat
+// 2415051030
 class CourseInteractionCard extends StatelessWidget {
   final String title;
   final String code;
