@@ -12,24 +12,28 @@ const String studentId = '2415051030';
 // ==================== DATA COURSE ====================
 // Data course diambil dari assets/data/student_data.json.
 //
-// TAHAP 9: proses membaca JSON dipindah ke CourseService.
-// TAHAP 10: main.dart tidak lagi memanggil CourseService langsung,
-// melainkan lewat CourseRepository (UI -> Repository -> Service).
-// Pemanggilan repository ini nantinya akan dipindah ke
-// CourseProvider (Tahap 11).
+// TAHAP 9: proses membaca JSON ada di CourseService.
+// TAHAP 10: CourseRepository menjadi perantara ke CourseService.
+// TAHAP 11: CourseProvider yang memanggil repository dan menyimpan
+// state async (courses, isLoading, error). UI hanya membaca state
+// dari Provider, tidak lagi memanggil repository/service sendiri.
+//
+// Alur: UI -> CourseProvider -> CourseRepository -> CourseService
 
 void main() {
-  // ==================== TAHAP 6 ====================
+  // ==================== TAHAP 6 + TAHAP 11 ====================
   // ChangeNotifierProvider menyediakan SATU instance CourseProvider
-  // ke seluruh widget tree di bawah MyApp. Widget mana pun yang
-  // ada di bawahnya bisa mengakses CourseProvider ini lewat
-  // context.watch<CourseProvider>() atau context.read<CourseProvider>()
-  // (dipakai mulai Tahap 7), tanpa perlu diteruskan lewat
-  // constructor satu per satu (menghindari prop drilling dari
-  // Tahap 2).
+  // ke seluruh widget tree.
+  //
+  // TAHAP 11: CourseProvider menerima CourseRepository lewat
+  // constructor, lalu loadCourses() dipanggil SEKALI saat provider
+  // dibuat (lewat cascade `..`). Tidak dipanggil dari build(), jadi
+  // data tidak dimuat berulang.
   runApp(
     ChangeNotifierProvider(
-      create: (_) => CourseProvider(),
+      create: (_) => CourseProvider(
+        CourseRepository(CourseService()),
+      )..loadCourses(),
       child: const MyApp(),
     ),
   );
@@ -60,23 +64,18 @@ class MyApp extends StatelessWidget {
 }
 
 // ==================== MAIN NAVIGATION ====================
-// TAHAP 7: favoriteCodes (Set<String>) dan toggleFavorite() yang
-// dulu manual di sini (Tahap 3) SUDAH DIHAPUS. Status favorite
-// kini sepenuhnya dipegang oleh CourseProvider (ChangeNotifier)
-// yang dipasang lewat ChangeNotifierProvider di main(). CoursesPage
-// dan CourseInteractionCard mengambil data itu langsung lewat
-// context.watch()/context.read()/Consumer, bukan lewat constructor
-// MainNavigationPage lagi.
+// TAHAP 7: status favorite dipegang CourseProvider.
+// TAHAP 8: courses bertipe List<Course>.
+// TAHAP 9-10: data dimuat lewat Repository -> Service.
 //
-// TAHAP 8: `courses` bertipe List<Course> (model), bukan
-// List<Map<String, dynamic>> lagi.
+// TAHAP 11: MainNavigationPage TIDAK lagi memuat data sendiri.
+// initState(), _loadCourses(), repository, courses, isLoading, dan
+// errorMessage lokal SUDAH DIHAPUS. Semua dipindah ke CourseProvider.
+// Di sini cukup membaca isLoading dan error dari Provider.
 //
-// TAHAP 9-10: data course dimuat lewat CourseRepository, yang
-// memakai CourseService. MainNavigationPage tidak tahu lagi bahwa
-// sumbernya JSON.
-//
-// MainNavigationPage tetap menjadi tempat courses dimuat, supaya
-// hanya ada SATU proses loading untuk seluruh app.
+// Catatan: dipakai context.select(), bukan context.watch(), supaya
+// MainNavigationPage HANYA rebuild saat isLoading/error berubah,
+// bukan setiap kali favorite di-toggle.
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -90,56 +89,20 @@ class _MainNavigationPageState
     extends State<MainNavigationPage> {
   int currentIndex = 0;
 
-  // TAHAP 10: repository menerima CourseService lewat constructor.
-  // Sementara dibuat langsung di sini; baru akan dipindah ke
-  // CourseProvider (Tahap 11).
-  final CourseRepository _courseRepository =
-      CourseRepository(CourseService());
-
-  // Data course hasil load (sudah berupa object Course), dan
-  // status loading-nya.
-  List<Course> courses = [];
-  bool isLoading = true;
-  String? errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCourses();
-  }
-
-  Future<void> _loadCourses() async {
-    try {
-      // TAHAP 10: ambil data lewat repository, bukan service.
-      final result = await _courseRepository.getCourses();
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        courses = result;
-        isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isWide =
         MediaQuery.of(context).size.width >= 600;
 
-    // Selama data belum selesai dimuat, tampilkan loading
-    // penuh layar terlebih dahulu.
+    // TAHAP 11: state async dibaca dari Provider.
+    final isLoading = context.select<CourseProvider, bool>(
+      (provider) => provider.isLoading,
+    );
+    final error = context.select<CourseProvider, String?>(
+      (provider) => provider.error,
+    );
+
+    // 1) LOADING
     if (isLoading) {
       return const Scaffold(
         body: Center(
@@ -148,28 +111,43 @@ class _MainNavigationPageState
       );
     }
 
-    if (errorMessage != null) {
+    // 2) ERROR
+    if (error != null) {
       return Scaffold(
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              'Gagal memuat data course:\n$errorMessage',
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Gagal memuat data course:\n$error',
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 16),
+
+                ElevatedButton(
+                  onPressed: () {
+                    // Aksi sekali-jalan -> read(), bukan watch().
+                    context
+                        .read<CourseProvider>()
+                        .loadCourses();
+                  },
+                  child: const Text('Coba Lagi'),
+                ),
+              ],
             ),
           ),
         ),
       );
     }
 
-    // pages sekarang hanya bergantung pada `courses`.
-    // Favorite TIDAK lagi diteruskan lewat constructor —
-    // CoursesPage mengambilnya sendiri dari CourseProvider.
+    // 3) SUCCESS
+    // CoursesPage mengambil courses sendiri dari CourseProvider.
     final List<Widget> pages = [
       const HomePage(),
-      CoursesPage(
-        courses: courses,
-      ),
+      const CoursesPage(),
       const ProfilePage(),
     ];
 
@@ -242,10 +220,6 @@ class _MainNavigationPageState
 }
 
 // ==================== HOME PAGE ====================
-// Halaman sambutan sederhana. Ringkasan favorite sudah
-// dipindahkan ke AppBar CoursesPage (ikon hati + angka),
-// dan demo ValueNotifier dipindahkan ke CounterPage tersendiri
-// (dibuka lewat ikon flask di AppBar CoursesPage).
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -314,13 +288,6 @@ class HomePage extends StatelessWidget {
 // ==================== COUNTER PAGE (TAHAP 4) ====================
 // Halaman terpisah untuk demo ValueNotifier + ValueListenableBuilder.
 // Dibuka lewat ikon flask di AppBar CoursesPage.
-//
-// Perbandingan dengan setState():
-// - setState() -> membangun ulang seluruh build() milik widget
-//   yang memanggilnya.
-// - ValueNotifier + ValueListenableBuilder -> hanya widget di
-//   dalam builder yang rebuild saat value berubah; bagian lain
-//   dari halaman ini (judul, ikon, penjelasan) TIDAK ikut rebuild.
 
 class CounterPage extends StatefulWidget {
   const CounterPage({super.key});
@@ -437,21 +404,18 @@ class _CounterPageState extends State<CounterPage> {
 }
 
 // ==================== COURSES PAGE ====================
-// TAHAP 7: CoursesPage hanya butuh `courses` dari constructor.
-// Status favorite TIDAK lagi lewat constructor — diambil langsung
-// dari CourseProvider lewat context.watch()/context.read().
+// TAHAP 7: status favorite diambil dari CourseProvider.
+// TAHAP 8: courses bertipe List<Course>.
 //
-// TAHAP 8: `courses` bertipe List<Course>. UI tidak lagi mengakses
-// key string (course['title']), melainkan properti bertipe
-// (course.title, course.code, dst).
+// TAHAP 11: CoursesPage TIDAK lagi menerima `courses` lewat
+// constructor. Daftar course dibaca dari CourseProvider memakai
+// context.select(), jadi halaman ini hanya rebuild kalau LIST
+// courses-nya berganti (mis. setelah loadCourses()), BUKAN setiap
+// favorite di-toggle. Rebuild favorite tetap dibatasi di
+// _FavoriteCountBadge dan Consumer pada card.
 
 class CoursesPage extends StatelessWidget {
-  final List<Course> courses;
-
-  const CoursesPage({
-    super.key,
-    required this.courses,
-  });
+  const CoursesPage({super.key});
 
   void showCourseMessage(
     BuildContext context,
@@ -466,6 +430,12 @@ class CoursesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TAHAP 11: courses berasal dari Provider.
+    final List<Course> courses =
+        context.select<CourseProvider, List<Course>>(
+      (provider) => provider.courses,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -488,11 +458,7 @@ class CoursesPage extends StatelessWidget {
           ),
 
           // Badge jumlah favorite dipisah jadi widget kecil
-          // sendiri (_FavoriteCountBadge) supaya context.watch()
-          // TIDAK dipanggil di build() CoursesPage ini, melainkan
-          // di build() widget kecil itu. Efeknya: saat favorite
-          // berubah, yang rebuild HANYA badge ini, bukan seluruh
-          // CoursesPage (AppBar title, ListView, dkk).
+          // sendiri supaya yang rebuild HANYA badge ini.
           const Padding(
             padding: EdgeInsets.only(right: 16),
             child: _FavoriteCountBadge(),
@@ -540,10 +506,8 @@ class CoursesPage extends StatelessWidget {
 }
 
 // Widget kecil khusus untuk badge jumlah favorite di AppBar.
-// Inilah satu-satunya tempat context.watch<CourseProvider>()
-// dipanggil untuk kebutuhan ini: build() di sini akan rebuild
-// setiap kali notifyListeners() dipanggil di CourseProvider,
-// tanpa membangun ulang seluruh CoursesPage.
+// build() di sini rebuild setiap kali notifyListeners() dipanggil
+// di CourseProvider, tanpa membangun ulang seluruh CoursesPage.
 class _FavoriteCountBadge extends StatelessWidget {
   const _FavoriteCountBadge();
 // I Gede Pradhana Subawa Deningrat
@@ -568,12 +532,9 @@ class _FavoriteCountBadge extends StatelessWidget {
 // ==================== INTERACTION CARD ====================
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
-// TAHAP 7: card ini tidak lagi menerima `favorite` dan
-// `onFavorite` dari parent. Keduanya diambil/dipicu langsung
-// dari CourseProvider menggunakan `code` yang dimiliki card ini.
-//
-// TAHAP 8: card menerima tambahan `status` dari model Course
-// dan menampilkannya di bawah kode + SKS.
+// TAHAP 7: favorite & aksi toggle diambil langsung dari
+// CourseProvider menggunakan `code` milik card ini.
+// TAHAP 8: card menampilkan `status` dari model Course.
 class CourseInteractionCard extends StatelessWidget {
   final String title;
   final String code;
@@ -652,10 +613,7 @@ class CourseInteractionCard extends StatelessWidget {
                 ),
               ),
 
-              // Consumer membungkus HANYA ikon hati. Saat
-              // notifyListeners() dipanggil, Flutter hanya
-              // rebuild widget di dalam `builder` ini — bukan
-              // seluruh Card/judul/subjudul di atas.
+              // Consumer membungkus HANYA ikon hati.
               Consumer<CourseProvider>(
                 builder: (context, courseProvider, child) {
                   final isFavorite =
@@ -663,10 +621,7 @@ class CourseInteractionCard extends StatelessWidget {
 
                   return IconButton(
                     onPressed: () {
-                      // read() -> ambil instance CourseProvider
-                      // TANPA subscribe/listen. Pas untuk aksi
-                      // sekali-jalan di dalam onPressed, bukan
-                      // untuk menampilkan nilai di build().
+                      // read() -> aksi sekali-jalan tanpa listen.
                       context
                           .read<CourseProvider>()
                           .toggleFavorite(code);
