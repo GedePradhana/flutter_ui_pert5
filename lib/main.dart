@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
 
+import 'models/course.dart';
 import 'providers/course_provider.dart';
 
 const String studentName = 'I Gede Pradhana Subawa Deningrat';
@@ -16,9 +17,11 @@ const String studentId = '2415051030';
 // mulai Tahap 5-7, menggantikan favoriteCodes manual di Tahap 3).
 
 // Membaca dan mem-parsing file JSON di folder data.
-// Catatan: langkah ini nantinya akan dipisah ke CourseService
-// (Tahap 9) dan CourseRepository (Tahap 10) agar tidak dipanggil
-// langsung dari UI.
+// TAHAP 8: hasil JSON tetap berupa List<Map>, tetapi langsung
+// diubah menjadi List<Course> di _loadCourses() lewat
+// Course.fromJson(). Catatan: langkah membaca JSON ini nantinya
+// akan dipisah ke CourseService (Tahap 9) dan CourseRepository
+// (Tahap 10) agar tidak dipanggil langsung dari UI.
 Future<List<Map<String, dynamic>>> loadCourseData() async {
   final jsonString = await rootBundle.loadString(
     'assets/data/student_data.json',
@@ -80,6 +83,9 @@ class MyApp extends StatelessWidget {
 // context.watch()/context.read()/Consumer, bukan lewat constructor
 // MainNavigationPage lagi.
 //
+// TAHAP 8: `courses` sekarang bertipe List<Course> (model),
+// bukan List<Map<String, dynamic>> lagi.
+//
 // MainNavigationPage tetap menjadi tempat courses dimuat dari
 // JSON, supaya hanya ada SATU proses loading untuk seluruh app.
 
@@ -95,10 +101,11 @@ class _MainNavigationPageState
     extends State<MainNavigationPage> {
   int currentIndex = 0;
 
-  // Data course hasil load dari JSON, dan status loading-nya.
-  // Bagian ini TETAP di sini untuk sementara; baru akan dipindah
-  // ke CourseService (Tahap 9) dan CourseRepository (Tahap 10).
-  List<Map<String, dynamic>> courses = [];
+  // Data course hasil load dari JSON (sudah berupa object Course),
+  // dan status loading-nya. Bagian ini TETAP di sini untuk
+  // sementara; baru akan dipindah ke CourseService (Tahap 9) dan
+  // CourseRepository (Tahap 10).
+  List<Course> courses = [];
   bool isLoading = true;
   String? errorMessage;
 
@@ -112,12 +119,18 @@ class _MainNavigationPageState
     try {
       final result = await loadCourseData();
 
+      // TAHAP 8: ubah setiap Map JSON menjadi object Course
+      // lewat factory Course.fromJson().
+      final parsed = result
+          .map((json) => Course.fromJson(json))
+          .toList();
+
       if (!mounted) {
         return;
       }
 
       setState(() {
-        courses = result;
+        courses = parsed;
         isLoading = false;
       });
     } catch (e) {
@@ -436,13 +449,16 @@ class _CounterPageState extends State<CounterPage> {
 }
 
 // ==================== COURSES PAGE ====================
-// TAHAP 7: CoursesPage sekarang hanya butuh `courses` dari
-// constructor. Status favorite TIDAK lagi lewat constructor —
-// diambil langsung dari CourseProvider lewat context.watch()/
-// context.read() di widget yang membutuhkannya.
+// TAHAP 7: CoursesPage hanya butuh `courses` dari constructor.
+// Status favorite TIDAK lagi lewat constructor — diambil langsung
+// dari CourseProvider lewat context.watch()/context.read().
+//
+// TAHAP 8: `courses` bertipe List<Course>. UI tidak lagi mengakses
+// key string (course['title']), melainkan properti bertipe
+// (course.title, course.code, dst).
 
 class CoursesPage extends StatelessWidget {
-  final List<Map<String, dynamic>> courses;
+  final List<Course> courses;
 
   const CoursesPage({
     super.key,
@@ -500,16 +516,15 @@ class CoursesPage extends StatelessWidget {
         children: [
           ...courses.map(
             (course) {
-              final code = course['code'] as String;
-
               return CourseInteractionCard(
-                title: course['title'] as String,
-                code: code,
-                credits: course['credits'] as int,
+                title: course.title,
+                code: course.code,
+                credits: course.credits,
+                status: course.status,
                 onTap: () {
                   showCourseMessage(
                     context,
-                    course['title'] as String,
+                    course.title,
                   );
                 },
               );
@@ -568,10 +583,14 @@ class _FavoriteCountBadge extends StatelessWidget {
 // TAHAP 7: card ini tidak lagi menerima `favorite` dan
 // `onFavorite` dari parent. Keduanya diambil/dipicu langsung
 // dari CourseProvider menggunakan `code` yang dimiliki card ini.
+//
+// TAHAP 8: card menerima tambahan `status` dari model Course
+// dan menampilkannya di bawah kode + SKS.
 class CourseInteractionCard extends StatelessWidget {
   final String title;
   final String code;
   final int credits;
+  final String status;
   final VoidCallback onTap;
 
   const CourseInteractionCard({
@@ -579,6 +598,7 @@ class CourseInteractionCard extends StatelessWidget {
     required this.title,
     required this.code,
     required this.credits,
+    required this.status,
     required this.onTap,
   });
 
@@ -624,6 +644,19 @@ class CourseInteractionCard extends StatelessWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .onSurfaceVariant,
+                        ),
+                      ),
+
+                      const SizedBox(height: 2),
+
+                      // TAHAP 8: field `status` dari model Course.
+                      Text(
+                        'Status: $status',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary,
                         ),
                       ),
                     ],
