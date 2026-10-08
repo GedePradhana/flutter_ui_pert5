@@ -1,5 +1,12 @@
+// ==================== TAHAP 15: CHECKLIST DEBUGGING ====================
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
+// UI tidak berubah padahal data berubah? Periksa berurutan:
+// 1. Apakah notifyListeners() dipanggil setelah state berubah? (Kasus A)
+// 2. Apakah widget memakai watch/Consumer/select, bukan read?
+// 3. Apakah context berada di bawah ChangeNotifierProvider? (Kasus B)
+// 4. Apakah error async ditangkap dan disimpan di state? (Kasus C)
+// 5. Apakah mounted dicek sebelum setState/context setelah await? (Kasus D)
 import 'package:flutter/foundation.dart';
 
 import '../models/course.dart';
