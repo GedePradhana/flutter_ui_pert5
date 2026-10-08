@@ -2,7 +2,7 @@
 // 2415051030
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'course_detail_page.dart';
 import '../constants/student_info.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
@@ -68,9 +68,12 @@ class CoursesPage extends StatelessWidget {
                 credits: course.credits,
                 status: course.status,
                 onTap: () {
-                  showCourseMessage(
+                  Navigator.push(
                     context,
-                    course.title,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CourseDetailPage(course: course),
+                    ),
                   );
                 },
               );

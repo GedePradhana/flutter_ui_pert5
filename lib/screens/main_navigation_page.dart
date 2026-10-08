@@ -2,7 +2,7 @@
 // 2415051030
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'favorites_page.dart';
 import '../providers/course_provider.dart';
 import 'courses_page.dart';
 import 'home_page.dart';
@@ -71,6 +71,7 @@ class _MainNavigationPageState
     final List<Widget> pages = [
       const HomePage(),
       const CoursesPage(),
+      const FavoritesPage(),
       const ProfilePage(),
     ];
 
@@ -96,6 +97,11 @@ class _MainNavigationPageState
                   icon: Icon(Icons.menu_book_outlined),
                   selectedIcon: Icon(Icons.menu_book),
                   label: Text('Courses'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.favorite_border),
+                  selectedIcon: Icon(Icons.favorite),
+                  label: Text('Favorites'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.person_outline),
@@ -127,6 +133,11 @@ class _MainNavigationPageState
                   icon: Icon(Icons.menu_book_outlined),
                   selectedIcon: Icon(Icons.menu_book),
                   label: 'Courses',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.favorite_border),
+                  selectedIcon: Icon(Icons.favorite),
+                  label: 'Favorites',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.person_outline),
