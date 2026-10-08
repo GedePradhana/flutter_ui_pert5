@@ -8,10 +8,6 @@ import '../repositories/course_repository.dart';
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
 //
-// TAHAP 5-7: class ini menangani shared state favorites.
-// TAHAP 11: class ini juga menangani async state (courses,
-// isLoading, error) dengan mengambil data lewat CourseRepository.
-//
 // Arah dependency: UI -> CourseProvider -> CourseRepository -> CourseService
 class CourseProvider extends ChangeNotifier {
   // TAHAP 11: repository diterima lewat constructor, jadi Provider
