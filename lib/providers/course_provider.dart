@@ -4,9 +4,10 @@ import 'package:flutter/foundation.dart';
 // ChangeNotifier dan notifyListeners()
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
-// Untuk SEKARANG, class ini baru menangani state favorites saja,
-// menggantikan peran favoriteCodes yang sebelumnya ada di
-// _MainNavigationPageState (Tahap 3).
+// Class ini menangani state favorites, menggantikan peran
+// favoriteCodes yang sebelumnya ada di _MainNavigationPageState
+// (Tahap 3). Tidak ada perubahan dari Tahap 5-6 — file ini
+// SUDAH PAS untuk dipakai di Tahap 7 (watch/read/Consumer).
 class CourseProvider extends ChangeNotifier {
   // Shared state: daftar kode course yang difavoritkan.
   // Masih Set<String>, sama seperti favoriteCodes di Tahap 3.
