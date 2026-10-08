@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:provider/provider.dart';
+
+import 'providers/course_provider.dart';
 
 const String studentName = 'I Gede Pradhana Subawa Deningrat';
 const String studentId = '2415051030';
@@ -27,7 +30,20 @@ Future<List<Map<String, dynamic>>> loadCourseData() async {
 }
 
 void main() {
-  runApp(const MyApp());
+  // ==================== TAHAP 6 ====================
+  // ChangeNotifierProvider menyediakan SATU instance CourseProvider
+  // ke seluruh widget tree di bawah MyApp. Widget mana pun yang
+  // nanti ada di bawahnya bisa mengakses CourseProvider ini lewat
+  // context.watch<CourseProvider>() atau context.read<CourseProvider>()
+  // (dipakai mulai Tahap 7), tanpa perlu diteruskan lewat
+  // constructor satu per satu (menghindari prop drilling dari
+  // Tahap 2).
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => CourseProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
