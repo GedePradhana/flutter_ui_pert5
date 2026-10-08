@@ -1,37 +1,23 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
 
 import 'models/course.dart';
 import 'providers/course_provider.dart';
+import 'services/course_service.dart';
 
 const String studentName = 'I Gede Pradhana Subawa Deningrat';
 const String studentId = '2415051030';
 
 // ==================== DATA COURSE ====================
 // Data course TIDAK lagi hardcoded di sini. Data diambil dari
-// assets/data/student_data.json (lihat loadCourseData di bawah).
-// Field 'favorite' tetap tidak ada di sumber data, karena status
-// favorite dimiliki oleh CourseProvider (single source of truth
-// mulai Tahap 5-7, menggantikan favoriteCodes manual di Tahap 3).
-
-// Membaca dan mem-parsing file JSON di folder data.
-// TAHAP 8: hasil JSON tetap berupa List<Map>, tetapi langsung
-// diubah menjadi List<Course> di _loadCourses() lewat
-// Course.fromJson(). Catatan: langkah membaca JSON ini nantinya
-// akan dipisah ke CourseService (Tahap 9) dan CourseRepository
-// (Tahap 10) agar tidak dipanggil langsung dari UI.
-Future<List<Map<String, dynamic>>> loadCourseData() async {
-  final jsonString = await rootBundle.loadString(
-    'assets/data/student_data.json',
-  );
-
-  final data = jsonDecode(jsonString) as Map<String, dynamic>;
-  final list = data['courses'] as List<dynamic>;
-
-  return list.cast<Map<String, dynamic>>();
-}
+// assets/data/student_data.json.
+//
+// TAHAP 9: proses membaca JSON (rootBundle.loadString dan
+// jsonDecode) SUDAH DIPINDAH dari main.dart ke CourseService
+// (lib/services/course_service.dart). main.dart tidak lagi
+// mengimpor dart:convert maupun rootBundle. Pemanggilan service
+// ini nantinya akan dipindah ke CourseRepository (Tahap 10) dan
+// CourseProvider (Tahap 11) agar tidak dipanggil langsung dari UI.
 
 void main() {
   // ==================== TAHAP 6 ====================
@@ -83,11 +69,15 @@ class MyApp extends StatelessWidget {
 // context.watch()/context.read()/Consumer, bukan lewat constructor
 // MainNavigationPage lagi.
 //
-// TAHAP 8: `courses` sekarang bertipe List<Course> (model),
-// bukan List<Map<String, dynamic>> lagi.
+// TAHAP 8: `courses` bertipe List<Course> (model), bukan
+// List<Map<String, dynamic>> lagi.
 //
-// MainNavigationPage tetap menjadi tempat courses dimuat dari
-// JSON, supaya hanya ada SATU proses loading untuk seluruh app.
+// TAHAP 9: data course dimuat lewat CourseService. MainNavigationPage
+// hanya memanggil _courseService.loadCourses() dan menerima
+// List<Course> jadi; ia tidak tahu lagi bahwa sumbernya JSON.
+//
+// MainNavigationPage tetap menjadi tempat courses dimuat, supaya
+// hanya ada SATU proses loading untuk seluruh app.
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -101,10 +91,13 @@ class _MainNavigationPageState
     extends State<MainNavigationPage> {
   int currentIndex = 0;
 
-  // Data course hasil load dari JSON (sudah berupa object Course),
-  // dan status loading-nya. Bagian ini TETAP di sini untuk
-  // sementara; baru akan dipindah ke CourseService (Tahap 9) dan
-  // CourseRepository (Tahap 10).
+  // TAHAP 9: service untuk mengambil data course.
+  // Sementara dibuat langsung di sini; baru akan dipindah ke
+  // CourseRepository (Tahap 10) dan CourseProvider (Tahap 11).
+  final CourseService _courseService = CourseService();
+
+  // Data course hasil load (sudah berupa object Course), dan
+  // status loading-nya.
   List<Course> courses = [];
   bool isLoading = true;
   String? errorMessage;
@@ -117,20 +110,16 @@ class _MainNavigationPageState
 
   Future<void> _loadCourses() async {
     try {
-      final result = await loadCourseData();
-
-      // TAHAP 8: ubah setiap Map JSON menjadi object Course
-      // lewat factory Course.fromJson().
-      final parsed = result
-          .map((json) => Course.fromJson(json))
-          .toList();
+      // TAHAP 9: parsing JSON + pembuatan object Course sekarang
+      // dilakukan di dalam CourseService, bukan di sini.
+      final result = await _courseService.loadCourses();
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-        courses = parsed;
+        courses = result;
         isLoading = false;
       });
     } catch (e) {
