@@ -1,5 +1,16 @@
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
+//
+// ==================== COURSE EXPLORER v2 (TAHAP 14) ====================
+// Arsitektur berlapis:
+//   UI (screens/widgets) -> CourseProvider -> CourseRepository -> CourseService
+//
+// - models/        : Course (parsing JSON lewat Course.fromJson)
+// - services/      : CourseService (membaca assets/data/student_data.json)
+// - repositories/  : CourseRepository (perantara ke service)
+// - providers/     : CourseProvider (courses, isLoading, error, favorites)
+// - screens/       : halaman penuh (Home, Courses, Favorites, Detail, dst.)
+// - widgets/       : komponen UI kecil (card, badge favorit)
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
