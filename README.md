@@ -14,7 +14,7 @@ UI tidak memanggil `rootBundle` atau `jsonDecode` secara langsung.
 
 ## Tanggung Jawab Setiap Folder
 
-| Folder | Tanggung jawab |
+| Folder | Tanggung jawab |.
 |---|---|
 | `lib/constants/` | Nilai tetap yang dipakai banyak screen (nama dan NIM mahasiswa). |
 | `lib/models/` | Bentuk data. `Course` dan `Course.fromJson()` mengubah JSON menjadi object bertipe. |
