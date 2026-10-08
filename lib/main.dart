@@ -290,6 +290,8 @@ class _CoursesPageState extends State<CoursesPage> {
                     course['title'] as String,
                   );
                 },
+                // I Gede Pradhana Subawa Deningrat
+                // 2415051030
                 onFavorite: () {
                   setState(() {
                     course['favorite'] =
@@ -400,6 +402,8 @@ class CourseInteractionCard extends StatelessWidget {
     );
   }
 }
+
+
 
 // ==================== FEEDBACK PAGE ====================
 
