@@ -1,17 +1,35 @@
-# flutter_ui_fundamentals
+# Course Explorer v2
 
-A new Flutter project.
+Nama: I Gede Pradhana Subawa Deningrat
+NIM: 2415051030
 
-## Getting Started
+Aplikasi Flutter untuk menampilkan daftar course dengan state management
+Provider dan architecture berlapis (Pertemuan 06).
 
-This project is a starting point for a Flutter application.
+## Arah Dependency
 
-A few resources to get you started if this is your first Flutter project:
+Screen/Widget -> CourseProvider -> CourseRepository -> CourseService -> JSON (assets)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+UI tidak memanggil `rootBundle` atau `jsonDecode` secara langsung.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Tanggung Jawab Setiap Folder
+
+| Folder | Tanggung jawab |
+|---|---|
+| `lib/constants/` | Nilai tetap yang dipakai banyak screen (nama dan NIM mahasiswa). |
+| `lib/models/` | Bentuk data. `Course` dan `Course.fromJson()` mengubah JSON menjadi object bertipe. |
+| `lib/services/` | Akses sumber data mentah. `CourseService` membaca dan mem-parse file JSON di assets. Tidak mengandung UI. |
+| `lib/repositories/` | Perantara antara state dan sumber data. `CourseRepository` menyembunyikan asal data dari Provider. |
+| `lib/providers/` | State aplikasi dan logika perubahannya (`courses`, `isLoading`, `error`, `favorites`). Memanggil `notifyListeners()` saat state berubah. Tidak menyimpan `BuildContext`. |
+| `lib/screens/` | Halaman penuh (Scaffold): Home, Courses, Favorites, Detail, Profile, Feedback, Counter, dan navigasi utama. |
+| `lib/widgets/` | Komponen UI kecil yang dipakai di dalam screen: `CourseInteractionCard`, `FavoriteCountBadge`. |
+
+`lib/main.dart` hanya merakit dependency (service, repository, provider) dan
+menjalankan aplikasi.
+
+## Hasil Audit (Tahap 16)
+
+- `rootBundle` dan `jsonDecode` hanya ada di `CourseService`.
+- `CourseService` tidak mengimpor `material.dart` dan tidak mengandung widget.
+- `CourseProvider` tidak menyimpan `BuildContext`.
+- Screen dan widget tidak mengimpor `services/` maupun `repositories/`.
