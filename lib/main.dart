@@ -1,7 +1,30 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 const String studentName = 'I Gede Pradhana Subawa Deningrat';
 const String studentId = '2415051030';
+
+// ==================== DATA COURSE ====================
+// Data course TIDAK lagi hardcoded di sini. Data diambil dari
+// assets/data/student_data.json (lihat loadCourseData di bawah).
+// Field 'favorite' tetap tidak ada di sumber data, karena status
+// favorite dimiliki oleh MainNavigationPage (single source of truth).
+
+// Membaca dan mem-parsing file JSON di folder data.
+// Catatan: langkah ini nantinya akan dipisah ke CourseService
+// (Tahap 9) dan CourseRepository (Tahap 10) agar tidak dipanggil
+// langsung dari UI.
+Future<List<Map<String, dynamic>>> loadCourseData() async {
+  final jsonString = await rootBundle.loadString(
+    'assets/data/student_data.json',
+  );
+
+  final data = jsonDecode(jsonString) as Map<String, dynamic>;
+  final list = data['courses'] as List<dynamic>;
+
+  return list.cast<Map<String, dynamic>>();
+}
 
 void main() {
   runApp(const MyApp());
@@ -32,6 +55,13 @@ class MyApp extends StatelessWidget {
 }
 
 // ==================== MAIN NAVIGATION ====================
+// TAHAP 3: LIFTING STATE UP
+// State favorite dipindahkan ke MainNavigationPage karena
+// ini adalah ancestor terdekat dari HomePage dan CoursesPage
+// (dua widget yang sama-sama membutuhkan data favorite).
+//
+// MainNavigationPage juga menjadi tempat courses dimuat dari
+// JSON, supaya hanya ada SATU proses loading untuk seluruh app.
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -45,16 +75,101 @@ class _MainNavigationPageState
     extends State<MainNavigationPage> {
   int currentIndex = 0;
 
-  final List<Widget> pages = const [
-    HomePage(),
-    CoursesPage(),
-    ProfilePage(),
-  ];
+  // SINGLE SOURCE OF TRUTH
+  // Hanya ada SATU tempat penyimpanan favorite di seluruh aplikasi.
+  // Child tidak boleh menyimpan salinan sendiri.
+  final Set<String> favoriteCodes = {};
+
+  // Data course hasil load dari JSON, dan status loading-nya.
+  List<Map<String, dynamic>> courses = [];
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCourses();
+  }
+
+  Future<void> _loadCourses() async {
+    try {
+      final result = await loadCourseData();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        courses = result;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        errorMessage = e.toString();
+        isLoading = false;
+      });
+    }
+  }
+
+  // Aksi perubahan state. Method ini dikirim ke child
+  // sebagai callback.
+  void toggleFavorite(String code) {
+    setState(() {
+      if (favoriteCodes.contains(code)) {
+        favoriteCodes.remove(code);
+      } else {
+        favoriteCodes.add(code);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final isWide =
         MediaQuery.of(context).size.width >= 600;
+
+    // Selama data belum selesai dimuat, tampilkan loading
+    // penuh layar terlebih dahulu.
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Gagal memuat data course:\n$errorMessage',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // pages dibuat di dalam build() karena sekarang
+    // bergantung pada state (favoriteCodes dan courses).
+    final List<Widget> pages = [
+      HomePage(
+        courses: courses,
+        favoriteCodes: favoriteCodes,
+      ),
+      CoursesPage(
+        courses: courses,
+        favoriteCodes: favoriteCodes,
+        onToggleFavorite: toggleFavorite,
+      ),
+      const ProfilePage(),
+    ];
 
     return Scaffold(
       body: Row(
@@ -125,18 +240,36 @@ class _MainNavigationPageState
 }
 
 // ==================== HOME PAGE ====================
+// WIDGET KE-1 yang menampilkan state favorite.
+// Hanya MEMBACA data dari parent (tidak punya salinan sendiri).
 
 class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+  final List<Map<String, dynamic>> courses;
+  final Set<String> favoriteCodes;
+
+  const HomePage({
+    super.key,
+    required this.courses,
+    required this.favoriteCodes,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Ambil judul course yang difavoritkan berdasarkan kode.
+    final favoriteTitles = courses
+        .where(
+          (course) =>
+              favoriteCodes.contains(course['code']),
+        )
+        .map((course) => course['title'] as String)
+        .toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -182,6 +315,47 @@ class HomePage extends StatelessWidget {
                 'Selamat datang di Course Explorer.',
                 textAlign: TextAlign.center,
               ),
+
+              const SizedBox(height: 24),
+
+              // Tampilan state favorite (dibaca dari parent)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.favorite,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Course Favorit: ${favoriteCodes.length}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      if (favoriteTitles.isEmpty)
+                        const Text(
+                          'Belum ada course favorit.',
+                        )
+                      else
+                        ...favoriteTitles.map(
+                          (title) => Text('• $title'),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -191,47 +365,27 @@ class HomePage extends StatelessWidget {
 }
 
 // ==================== COURSES PAGE ====================
+// WIDGET KE-2 yang memakai state favorite.
+// Sekarang StatelessWidget karena tidak lagi memiliki state sendiri:
+//  - data masuk lewat constructor (courses, favoriteCodes)
+//  - aksi keluar lewat callback (onToggleFavorite)
 
-class CoursesPage extends StatefulWidget {
-  const CoursesPage({super.key});
+class CoursesPage extends StatelessWidget {
+  final List<Map<String, dynamic>> courses;
+  final Set<String> favoriteCodes;
+  final void Function(String code) onToggleFavorite;
 
-  @override
-  State<CoursesPage> createState() => _CoursesPageState();
-}
+  const CoursesPage({
+    super.key,
+    required this.courses,
+    required this.favoriteCodes,
+    required this.onToggleFavorite,
+  });
 
-class _CoursesPageState extends State<CoursesPage> {
-  final List<Map<String, dynamic>> courses = [
-    {
-      'code': 'PM01',
-      'title': 'Pemrograman Mobile',
-      'credits': 3,
-      'status': 'Aktif',
-      'favorite': false,
-    },
-    {
-      'code': 'WD01',
-      'title': 'Pemrograman Web',
-      'credits': 3,
-      'status': 'Selesai',
-      'favorite': false,
-    },
-    {
-      'code': 'AL01',
-      'title': 'Algoritma dan Pemrograman',
-      'credits': 3,
-      'status': 'Selesai',
-      'favorite': false,
-    },
-    {
-      'code': 'UI01',
-      'title': 'Desain Antarmuka',
-      'credits': 2,
-      'status': 'Aktif',
-      'favorite': false,
-    },
-  ];
-
-  void showCourseMessage(String title) {
+  void showCourseMessage(
+    BuildContext context,
+    String title,
+  ) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$title dipilih'),
@@ -275,28 +429,37 @@ class _CoursesPageState extends State<CoursesPage> {
             ),
           ),
 
+          const SizedBox(height: 4),
+
+          // Nilai ini harus selalu sama dengan yang tampil di Home
+          Text(
+            'Total favorit: ${favoriteCodes.length}',
+          ),
+
           const SizedBox(height: 12),
 
           ...courses.map(
             (course) {
+              final code = course['code'] as String;
+
               return CourseInteractionCard(
                 title: course['title'] as String,
-                code: course['code'] as String,
+                code: code,
                 credits: course['credits'] as int,
                 status: course['status'] as String,
-                favorite: course['favorite'] as bool,
+                // data dari parent
+                favorite: favoriteCodes.contains(code),
                 onTap: () {
                   showCourseMessage(
+                    context,
                     course['title'] as String,
                   );
                 },
                 // I Gede Pradhana Subawa Deningrat
                 // 2415051030
+                // aksi dikirim balik ke parent lewat callback
                 onFavorite: () {
-                  setState(() {
-                    course['favorite'] =
-                        !(course['favorite'] as bool);
-                  });
+                  onToggleFavorite(code);
                 },
               );
             },
@@ -323,7 +486,7 @@ class _CoursesPageState extends State<CoursesPage> {
 }
 
 // ==================== INTERACTION CARD ====================
-// I Gede Pradahan Subawa Deningrat
+// I Gede Pradhana Subawa Deningrat
 // 2415051030
 class CourseInteractionCard extends StatelessWidget {
   final String title;
@@ -394,6 +557,7 @@ class CourseInteractionCard extends StatelessWidget {
                   favorite
                       ? Icons.favorite
                       : Icons.favorite_border,
+                  color: favorite ? Colors.red : null,
                 ),
               ),
             ],
@@ -403,8 +567,6 @@ class CourseInteractionCard extends StatelessWidget {
     );
   }
 }
-
-
 
 // ==================== FEEDBACK PAGE ====================
 
