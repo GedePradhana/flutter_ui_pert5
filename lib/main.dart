@@ -159,10 +159,7 @@ class _MainNavigationPageState
     // pages dibuat di dalam build() karena sekarang
     // bergantung pada state (favoriteCodes dan courses).
     final List<Widget> pages = [
-      HomePage(
-        courses: courses,
-        favoriteCodes: favoriteCodes,
-      ),
+      const HomePage(),
       CoursesPage(
         courses: courses,
         favoriteCodes: favoriteCodes,
@@ -240,36 +237,22 @@ class _MainNavigationPageState
 }
 
 // ==================== HOME PAGE ====================
-// WIDGET KE-1 yang menampilkan state favorite.
-// Hanya MEMBACA data dari parent (tidak punya salinan sendiri).
+// Halaman sambutan sederhana. Ringkasan favorite sudah
+// dipindahkan ke AppBar CoursesPage (ikon hati + angka),
+// dan demo ValueNotifier dipindahkan ke CounterPage tersendiri
+// (dibuka lewat ikon flask di AppBar CoursesPage).
 
 class HomePage extends StatelessWidget {
-  final List<Map<String, dynamic>> courses;
-  final Set<String> favoriteCodes;
-
-  const HomePage({
-    super.key,
-    required this.courses,
-    required this.favoriteCodes,
-  });
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Ambil judul course yang difavoritkan berdasarkan kode.
-    final favoriteTitles = courses
-        .where(
-          (course) =>
-              favoriteCodes.contains(course['code']),
-        )
-        .map((course) => course['title'] as String)
-        .toList();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
       ),
       body: Center(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -315,46 +298,130 @@ class HomePage extends StatelessWidget {
                 'Selamat datang di Course Explorer.',
                 textAlign: TextAlign.center,
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== COUNTER PAGE (TAHAP 4) ====================
+// Halaman terpisah untuk demo ValueNotifier + ValueListenableBuilder.
+// Dibuka lewat ikon flask di AppBar CoursesPage.
+//
+// Perbandingan dengan setState():
+// - setState() -> membangun ulang seluruh build() milik widget
+//   yang memanggilnya.
+// - ValueNotifier + ValueListenableBuilder -> hanya widget di
+//   dalam builder yang rebuild saat value berubah; bagian lain
+//   dari halaman ini (judul, ikon, penjelasan) TIDAK ikut rebuild.
+
+class CounterPage extends StatefulWidget {
+  const CounterPage({super.key});
+
+  @override
+  State<CounterPage> createState() => _CounterPageState();
+}
+
+class _CounterPageState extends State<CounterPage> {
+  final ValueNotifier<int> demoCounter = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    demoCounter.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Demo ValueNotifier'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                studentName,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              const Text(
+                'NIM: 2415051030',
+                style: TextStyle(fontSize: 14),
+              ),
 
               const SizedBox(height: 24),
 
-              // Tampilan state favorite (dibaca dari parent)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.favorite,
-                            color: Colors.red,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Course Favorit: ${favoriteCodes.length}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+              Icon(
+                Icons.science_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
 
-                      const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
-                      if (favoriteTitles.isEmpty)
-                        const Text(
-                          'Belum ada course favorit.',
-                        )
-                      else
-                        ...favoriteTitles.map(
-                          (title) => Text('• $title'),
-                        ),
-                    ],
+              const Text(
+                'Tahap 4 — nilai ini berubah tanpa setState()',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13),
+              ),
+
+              const SizedBox(height: 32),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      // Mengubah .value SAJA sudah cukup
+                      // memicu listener. Tidak perlu
+                      // setState() di sini.
+                      demoCounter.value--;
+                    },
+                    icon: const Icon(Icons.remove),
                   ),
-                ),
+
+                  const SizedBox(width: 24),
+
+                  ValueListenableBuilder<int>(
+                    valueListenable: demoCounter,
+                    builder: (context, value, child) {
+                      return Container(
+                        constraints: const BoxConstraints(
+                          minWidth: 64,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$value',
+                          style: const TextStyle(
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(width: 24),
+
+                  IconButton.filledTonal(
+                    onPressed: () {
+                      demoCounter.value++;
+                    },
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
               ),
             ],
           ),
@@ -366,9 +433,12 @@ class HomePage extends StatelessWidget {
 
 // ==================== COURSES PAGE ====================
 // WIDGET KE-2 yang memakai state favorite.
-// Sekarang StatelessWidget karena tidak lagi memiliki state sendiri:
+// StatelessWidget karena tidak lagi memiliki state sendiri:
 //  - data masuk lewat constructor (courses, favoriteCodes)
 //  - aksi keluar lewat callback (onToggleFavorite)
+//
+// AppBar menampilkan ringkasan favorite (ikon hati + angka) dan
+// ikon flask untuk membuka CounterPage (demo Tahap 4).
 
 class CoursesPage extends StatelessWidget {
   final List<Map<String, dynamic>> courses;
@@ -397,47 +467,43 @@ class CoursesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Courses'),
+        title: Text(
+          'Courses - $studentId ${studentName.split(' ').first}',
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          // Ikon flask -> buka halaman demo ValueNotifier (Tahap 4)
+          IconButton(
+            tooltip: 'Demo ValueNotifier',
+            icon: const Icon(Icons.science_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CounterPage(),
+                ),
+              );
+            },
+          ),
+
+          // Ringkasan favorite (single source of truth dari
+          // MainNavigationPage). Nilai ini harus selalu sama
+          // dengan jumlah hati yang aktif di daftar di bawah.
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.favorite),
+                const SizedBox(width: 4),
+                Text('${favoriteCodes.length}'),
+              ],
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            studentName,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          const Text(
-            'NIM: 2415051030',
-            style: TextStyle(
-              fontSize: 16,
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          const Text(
-            'Daftar Course',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          // Nilai ini harus selalu sama dengan yang tampil di Home
-          Text(
-            'Total favorit: ${favoriteCodes.length}',
-          ),
-
-          const SizedBox(height: 12),
-
           ...courses.map(
             (course) {
               final code = course['code'] as String;
@@ -446,7 +512,6 @@ class CoursesPage extends StatelessWidget {
                 title: course['title'] as String,
                 code: code,
                 credits: course['credits'] as int,
-                status: course['status'] as String,
                 // data dari parent
                 favorite: favoriteCodes.contains(code),
                 onTap: () {
@@ -492,7 +557,6 @@ class CourseInteractionCard extends StatelessWidget {
   final String title;
   final String code;
   final int credits;
-  final String status;
   final bool favorite;
   final VoidCallback onTap;
   final VoidCallback onFavorite;
@@ -502,7 +566,6 @@ class CourseInteractionCard extends StatelessWidget {
     required this.title,
     required this.code,
     required this.credits,
-    required this.status,
     required this.favorite,
     required this.onTap,
     required this.onFavorite,
@@ -511,21 +574,22 @@ class CourseInteractionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
           child: Row(
             children: [
-              const Icon(
-                Icons.book,
-                size: 32,
-              ),
-
-              const SizedBox(width: 12),
-
               Expanded(
                 child: GestureDetector(
                   onDoubleTap: onTap,
@@ -537,14 +601,19 @@ class CourseInteractionCard extends StatelessWidget {
                         title,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 17,
+                          fontSize: 16,
                         ),
                       ),
 
                       const SizedBox(height: 4),
 
                       Text(
-                        '$code • $credits SKS • $status',
+                        '$code • $credits SKS',
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
