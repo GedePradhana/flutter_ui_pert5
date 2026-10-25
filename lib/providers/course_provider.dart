@@ -13,7 +13,7 @@ import '../models/course.dart';
 import '../repositories/course_repository.dart';
 
 // ==================== TAHAP 5 + TAHAP 11 + TAHAP 13 ====================
-// Arah dependency: UI -> CourseProvider -> CourseRepository -> CourseService
+// Arah dependency: UI -> CourseProvider -> CourseRepository -> CourseApiService
 class CourseProvider extends ChangeNotifier {
   final CourseRepository repository;
 

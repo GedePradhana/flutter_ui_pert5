@@ -1,12 +1,13 @@
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
 //
-// ==================== COURSE EXPLORER v2 (TAHAP 14) ====================
+// ==================== COURSE EXPLORER v2 (TAHAP 4, Pertemuan 7) ====================
 // Arsitektur berlapis:
-//   UI (screens/widgets) -> CourseProvider -> CourseRepository -> CourseService
+//   UI (screens/widgets) -> CourseProvider -> CourseRepository -> CourseApiService
 //
 // - models/        : Course (parsing JSON lewat Course.fromJson)
-// - services/      : CourseService (membaca assets/data/student_data.json)
+// - services/      : CourseApiService (REST API, menggantikan CourseService
+//                    yang sebelumnya membaca assets/data/student_data.json)
 // - repositories/  : CourseRepository (perantara ke service)
 // - providers/     : CourseProvider (courses, isLoading, error, favorites)
 // - screens/       : halaman penuh (Home, Courses, Favorites, Detail, dst.)
@@ -17,22 +18,17 @@ import 'package:provider/provider.dart';
 import 'providers/course_provider.dart';
 import 'repositories/course_repository.dart';
 import 'screens/main_navigation_page.dart';
-import 'services/course_service.dart';
-import 'temp_http_test.dart';
+import 'services/course_api_service.dart';
 
-void main() async {
-  // ==================== TAHAP 2 ====================
-  // Panggilan uji coba SEMENTARA. Tidak mempengaruhi tampilan
-  // aplikasi sama sekali -- hasilnya cuma muncul di Debug Console.
-  // WidgetsFlutterBinding perlu diinisialisasi dulu karena kita
-  // memanggil kode async (http) sebelum runApp().
-  WidgetsFlutterBinding.ensureInitialized();
-  await runHttpGetTest();
+// Endpoint latihan (dummy, belum ada dari dosen). Ganti nilai ini
+// kalau dosen sudah memberi endpoint resmi.
+const String apiBaseUrl = 'https://jsonplaceholder.typicode.com';
 
+void main() {
   runApp(
     ChangeNotifierProvider(
       create: (_) => CourseProvider(
-        CourseRepository(CourseService()),
+        CourseRepository(CourseApiService(apiBaseUrl)),
       )..loadCourses(),
       child: const MyApp(),
     ),
