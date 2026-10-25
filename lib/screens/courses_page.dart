@@ -10,6 +10,7 @@ import '../widgets/course_interaction_card.dart';
 import '../widgets/favorite_count_badge.dart';
 import 'counter_page.dart';
 import 'feedback_page.dart';
+import '../temp_rest_courses_page.dart';
 
 class CoursesPage extends StatelessWidget {
   const CoursesPage({super.key});
@@ -47,6 +48,20 @@ class CoursesPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const CounterPage(),
+                ),
+              );
+            },
+          ),
+
+          // TAHAP 3 (sementara): buka halaman tes REST + Course model
+          IconButton(
+            tooltip: 'Tes REST (Tahap 3)',
+            icon: const Icon(Icons.cloud_download_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TempRestCoursesPage(),
                 ),
               );
             },
