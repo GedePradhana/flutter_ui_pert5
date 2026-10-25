@@ -18,8 +18,17 @@ import 'providers/course_provider.dart';
 import 'repositories/course_repository.dart';
 import 'screens/main_navigation_page.dart';
 import 'services/course_service.dart';
+import 'temp_http_test.dart';
 
-void main() {
+void main() async {
+  // ==================== TAHAP 2 ====================
+  // Panggilan uji coba SEMENTARA. Tidak mempengaruhi tampilan
+  // aplikasi sama sekali -- hasilnya cuma muncul di Debug Console.
+  // WidgetsFlutterBinding perlu diinisialisasi dulu karena kita
+  // memanggil kode async (http) sebelum runApp().
+  WidgetsFlutterBinding.ensureInitialized();
+  await runHttpGetTest();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => CourseProvider(
