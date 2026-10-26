@@ -84,4 +84,23 @@ class CourseApiService {
 
     throw Exception('Gagal membuat course');
   }
+
+  // ==================== TAHAP 7 ====================
+  // PUT ke /todos/{id} -- merepresentasikan PENGGANTIAN resource
+  // (bukan perubahan sebagian seperti PATCH). JSONPlaceholder akan
+  // meng-echo balik data yang dikirim, tapi kita tidak perlu
+  // mem-parsing responsnya karena updateCourse() cukup memberi
+  // tahu berhasil/gagal (Future<void>), sama seperti contoh di
+  // worksheet.
+  Future<void> updateCourse(int id, Course course) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/todos/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(course.toJson()),
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Gagal memperbarui course');
+    }
+  }
 }

@@ -66,6 +66,22 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
+  // ==================== TAHAP 7 ====================
+  // Guard submit ganda yang sama (isSaving) dipakai ulang di sini,
+  // tidak perlu flag terpisah untuk create vs update.
+  Future<void> updateCourse(int id, Course course) async {
+    isSaving = true;
+    notifyListeners();
+
+    try {
+      await repository.updateCourse(id, course);
+      await loadCourses();
+    } finally {
+      isSaving = false;
+      notifyListeners();
+    }
+  }
+
   // ==================== SHARED STATE FAVORITES (TAHAP 5) ====================
   final Set<String> favorites = {};
 

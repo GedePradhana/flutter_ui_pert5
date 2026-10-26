@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../constants/student_info.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
+import 'edit_course_page.dart';
 
 // TAHAP 13: halaman detail membaca status favorite dari
 // CourseProvider yang SAMA dengan list dan FavoritesPage.
@@ -28,6 +29,22 @@ class CourseDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Course'),
+        actions: [
+          // ==================== TAHAP 7 ====================
+          IconButton(
+            tooltip: 'Edit Course',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      EditCoursePage(course: course),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Padding(
