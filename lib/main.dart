@@ -22,6 +22,10 @@
 // Sumber data diganti dari CourseApiService (REST dummy) ke
 // CourseSupabaseService (tabel `courses` di Supabase). Hanya SATU
 // baris perakitan yang berubah; Repository, Provider, dan UI tetap.
+//
+// ==================== TAHAP 16: COURSE DATA MANAGER ====================
+// Data source aktif dipilih HANYA di main() lewat variabel
+// `dataSource`. Untuk berpindah ke REST, ganti satu baris itu saja.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -30,6 +34,7 @@ import 'constants/supabase_config.dart';
 import 'providers/course_provider.dart';
 import 'repositories/course_repository.dart';
 import 'screens/main_navigation_page.dart';
+import 'services/course_data_source.dart';
 import 'services/course_supabase_service.dart';
 
 Future<void> main() async {
@@ -40,9 +45,11 @@ Future<void> main() async {
     anonKey: supabaseAnonKey,
   );
 
-  // Perakitan: service -> repository -> provider.
-  // Sebelumnya: CourseRepository(CourseApiService(apiBaseUrl))
-  final repository = CourseRepository(CourseSupabaseService());
+  // Perakitan: data source -> repository -> provider.
+  // Data source aktif: Supabase.
+  // (untuk REST: CourseApiService(apiBaseUrl))
+  final CourseDataSource dataSource = CourseSupabaseService();
+  final repository = CourseRepository(dataSource);
 
   runApp(
     ChangeNotifierProvider(

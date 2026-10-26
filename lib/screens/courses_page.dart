@@ -41,6 +41,13 @@ class CoursesPage extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          // ==================== TAHAP 16 ====================
+          // Refresh manual: memuat ulang data dari database.
+          IconButton(
+            tooltip: 'Refresh',
+            icon: const Icon(Icons.refresh),
+            onPressed: provider.isLoading ? null : provider.loadCourses,
+          ),
           IconButton(
             tooltip: 'Demo ValueNotifier',
             icon: const Icon(Icons.science_outlined),

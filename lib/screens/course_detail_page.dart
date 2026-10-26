@@ -10,6 +10,10 @@ import 'edit_course_page.dart';
 
 // TAHAP 13: halaman detail membaca status favorite dari
 // CourseProvider yang SAMA dengan list dan FavoritesPage.
+// TAHAP 16: `course` tetap diterima lewat constructor, tetapi data
+// yang DITAMPILKAN diambil ulang dari provider (berdasarkan id)
+// supaya setelah Edit + refresh dari database, halaman detail
+// tidak menampilkan data lama.
 class CourseDetailPage extends StatelessWidget {
   final Course course;
 
@@ -92,10 +96,20 @@ class CourseDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TAHAP 16: ambil versi terbaru course ini dari provider.
+    // Kalau tidak ditemukan (mis. sedang dihapus), pakai course
+    // dari constructor.
+    final current = context.select<CourseProvider, Course>(
+      (provider) => provider.courses.firstWhere(
+        (c) => c.id != null && c.id == course.id,
+        orElse: () => course,
+      ),
+    );
+
     // select -> halaman hanya rebuild kalau status favorite
     // course INI yang berubah.
     final isFavorite = context.select<CourseProvider, bool>(
-      (provider) => provider.isFavorite(course.code),
+      (provider) => provider.isFavorite(current.code),
     );
 
     // isSaving dipakai untuk menonaktifkan tombol Edit/Delete
@@ -119,7 +133,7 @@ class CourseDetailPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            EditCoursePage(course: course),
+                            EditCoursePage(course: current),
                       ),
                     );
                   },
@@ -169,7 +183,7 @@ class CourseDetailPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                course.title,
+                current.title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 22,
@@ -177,9 +191,9 @@ class CourseDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text('${course.code} • ${course.credits} SKS'),
+              Text('${current.code} • ${current.credits} SKS'),
               const SizedBox(height: 4),
-              Text('Status: ${course.status}'),
+              Text('Status: ${current.status}'),
               const SizedBox(height: 12),
               Text(
                 isFavorite
@@ -195,7 +209,7 @@ class CourseDetailPage extends StatelessWidget {
                 onPressed: () {
                   context
                       .read<CourseProvider>()
-                      .toggleFavorite(course.code);
+                      .toggleFavorite(current.code);
                 },
                 icon: Icon(
                   isFavorite
