@@ -22,7 +22,7 @@ import 'services/course_api_service.dart';
 
 // Endpoint latihan (dummy, belum ada dari dosen). Ganti nilai ini
 // kalau dosen sudah memberi endpoint resmi.
-const String apiBaseUrl = 'https://jsonplaceholder.typicode.com';
+const String apiBaseUrl = 'https://jsonplaceholder.typicode.com/salah';
 
 void main() {
   runApp(

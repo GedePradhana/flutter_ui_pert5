@@ -1,13 +1,26 @@
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'favorites_page.dart';
-import '../providers/course_provider.dart';
 import 'courses_page.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
 
+// ==================== TAHAP 5 (Pertemuan 7) ====================
+// Pengecekan isLoading/error di level navigasi (yang sebelumnya ada
+// di sini sejak Pertemuan 6) DIHAPUS. Alasannya: itu memblokir
+// SELURUH aplikasi (termasuk tab Home dan Profile yang tidak
+// butuh data course) hanya karena course gagal dimuat, dan membuat
+// ErrorView yang baru dibuat di CoursesPage tidak pernah sempat
+// tampil (ketimpa duluan oleh pengecekan di sini).
+//
+// Sekarang setiap tab bertanggung jawab atas state-nya sendiri:
+// CoursesPage menangani loading/error/empty/success miliknya
+// sendiri lewat CourseProvider, FavoritesPage menampilkan pesan
+// "belum ada favorit" kalau courses masih kosong. Home dan Profile
+// tidak terpengaruh sama sekali oleh status course.
+// I Gede Pradhana Subawa Deningrat
+// 2415051030
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
 
@@ -24,49 +37,6 @@ class _MainNavigationPageState
   Widget build(BuildContext context) {
     final isWide =
         MediaQuery.of(context).size.width >= 600;
-
-    final isLoading = context.select<CourseProvider, bool>(
-      (provider) => provider.isLoading,
-    );
-    final error = context.select<CourseProvider, String?>(
-      (provider) => provider.error,
-    );
-
-    if (isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (error != null) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Gagal memuat data course:\n$error',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context
-                        .read<CourseProvider>()
-                        .loadCourses();
-                  },
-                  child: const Text('Coba Lagi'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
 
     final List<Widget> pages = [
       const HomePage(),

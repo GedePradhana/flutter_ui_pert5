@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'course_detail_page.dart';
 import '../constants/student_info.dart';
-import '../models/course.dart';
 import '../providers/course_provider.dart';
 import '../widgets/course_interaction_card.dart';
+import '../widgets/error_view.dart';
 import '../widgets/favorite_count_badge.dart';
 import 'counter_page.dart';
 import 'feedback_page.dart';
@@ -27,10 +27,11 @@ class CoursesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<Course> courses =
-        context.select<CourseProvider, List<Course>>(
-      (provider) => provider.courses,
-    );
+    // ==================== TAHAP 5 ====================
+    // watch() di sini (bukan select) karena kita butuh BEBERAPA
+    // field sekaligus dari provider (isLoading, error, courses)
+    // untuk menentukan state mana yang ditampilkan.
+    final provider = context.watch<CourseProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -58,43 +59,68 @@ class CoursesPage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ...courses.map(
-            (course) {
-              return CourseInteractionCard(
-                title: course.title,
-                code: course.code,
-                credits: course.credits,
-                status: course.status,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          CourseDetailPage(course: course),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      const FeedbackPage(),
-                ),
-              );
-            },
-            child: const Text('Beri Feedback'),
-          ),
-        ],
-      ),
+      body: _buildBody(context, provider),
+    );
+  }
+
+  // ==================== TAHAP 5 ====================
+  // Loading -> Error -> Empty -> Success, urutan pengecekan ini
+  // penting: cek loading dulu, baru error, baru empty, baru data.
+  Widget _buildBody(BuildContext context, CourseProvider provider) {
+    if (provider.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (provider.error != null) {
+      return ErrorView(
+        message: provider.error!,
+        onRetry: provider.loadCourses,
+      );
+    }
+
+    if (provider.courses.isEmpty) {
+      return const Center(
+        child: Text('Data course belum tersedia'),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        ...provider.courses.map(
+          (course) {
+            return CourseInteractionCard(
+              title: course.title,
+              code: course.code,
+              credits: course.credits,
+              status: course.status,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        CourseDetailPage(course: course),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const FeedbackPage(),
+              ),
+            );
+          },
+          child: const Text('Beri Feedback'),
+        ),
+      ],
     );
   }
 }
