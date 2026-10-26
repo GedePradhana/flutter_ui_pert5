@@ -3,12 +3,13 @@
 //
 // ==================== COURSE EXPLORER v2 (TAHAP 4, Pertemuan 7) ====================
 // Arsitektur berlapis:
-//   UI (screens/widgets) -> CourseProvider -> CourseRepository -> CourseApiService
+//   UI (screens/widgets) -> CourseProvider -> CourseRepository -> CourseDataSource
 //
 // - models/        : Course (parsing JSON lewat Course.fromJson)
-// - services/      : CourseApiService (REST API, menggantikan CourseService
-//                    yang sebelumnya membaca assets/data/student_data.json)
-// - repositories/  : CourseRepository (perantara ke service)
+// - services/      : CourseDataSource (kontrak) dengan implementasi
+//                    CourseApiService (REST) dan CourseSupabaseService
+//                    (database Supabase)
+// - repositories/  : CourseRepository (perantara ke data source)
 // - providers/     : CourseProvider (courses, isLoading, error, favorites)
 // - screens/       : halaman penuh (Home, Courses, Favorites, Detail, dst.)
 // - widgets/       : komponen UI kecil (card, badge favorit)
@@ -16,6 +17,11 @@
 // ==================== TAHAP 10 ====================
 // Supabase.initialize() dipanggil sebelum runApp(), supaya client
 // Supabase siap dipakai sebelum widget tree dibangun.
+//
+// ==================== TAHAP 12 ====================
+// Sumber data diganti dari CourseApiService (REST dummy) ke
+// CourseSupabaseService (tabel `courses` di Supabase). Hanya SATU
+// baris perakitan yang berubah; Repository, Provider, dan UI tetap.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,11 +30,7 @@ import 'constants/supabase_config.dart';
 import 'providers/course_provider.dart';
 import 'repositories/course_repository.dart';
 import 'screens/main_navigation_page.dart';
-import 'services/course_api_service.dart';
-
-// Endpoint latihan (dummy, belum ada dari dosen). Ganti nilai ini
-// kalau dosen sudah memberi endpoint resmi.
-const String apiBaseUrl = 'https://jsonplaceholder.typicode.com';
+import 'services/course_supabase_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,11 +40,13 @@ Future<void> main() async {
     anonKey: supabaseAnonKey,
   );
 
+  // Perakitan: service -> repository -> provider.
+  // Sebelumnya: CourseRepository(CourseApiService(apiBaseUrl))
+  final repository = CourseRepository(CourseSupabaseService());
+
   runApp(
     ChangeNotifierProvider(
-      create: (_) => CourseProvider(
-        CourseRepository(CourseApiService(apiBaseUrl)),
-      )..loadCourses(),
+      create: (_) => CourseProvider(repository)..loadCourses(),
       child: const MyApp(),
     ),
   );
