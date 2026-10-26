@@ -170,8 +170,12 @@ class _EditCoursePageState extends State<EditCoursePage> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Credits wajib diisi';
                   }
-                  if (int.tryParse(value.trim()) == null) {
+                                    final credits = int.tryParse(value.trim());
+                  if (credits == null) {
                     return 'Credits harus berupa angka';
+                  }
+                  if (credits <= 0) {
+                    return 'Credits harus lebih dari 0';
                   }
                   return null;
                 },
