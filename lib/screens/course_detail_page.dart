@@ -18,12 +18,90 @@ class CourseDetailPage extends StatelessWidget {
     required this.course,
   });
 
+  // ==================== TAHAP 8 ====================
+  // AlertDialog konfirmasi SEBELUM menghapus.
+  Future<void> _confirmAndDelete(
+    BuildContext context,
+    CourseProvider provider,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Hapus Course'),
+          content: Text(
+            'Yakin ingin menghapus "${course.title}"? '
+            'Tindakan ini tidak bisa dibatalkan.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Pengguna memilih Batal, atau dialog ditutup tanpa memilih.
+    if (confirmed != true) return;
+
+    final id = course.id;
+    if (id == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Course ini tidak punya id, tidak bisa dihapus'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      // code dikirim juga supaya kalau course ini sedang
+      // difavoritkan, ikut dibersihkan dari favorites (tidak
+      // tersisa data yatim).
+      await provider.deleteCourse(id, code: course.code);
+
+      // Setelah await DELETE, WAJIB cek mounted sebelum
+      // menampilkan SnackBar atau memanggil Navigator.pop().
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Course berhasil dihapus'),
+        ),
+      );
+
+      // Keluar dari halaman detail -- course-nya sudah tidak ada.
+      Navigator.pop(context);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus course: $e'),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // select -> halaman hanya rebuild kalau status favorite
     // course INI yang berubah.
     final isFavorite = context.select<CourseProvider, bool>(
       (provider) => provider.isFavorite(course.code),
+    );
+
+    // isSaving dipakai untuk menonaktifkan tombol Edit/Delete
+    // selagi ada request (create/update/delete) sedang berjalan.
+    final isSaving = context.select<CourseProvider, bool>(
+      (provider) => provider.isSaving,
     );
 
     return Scaffold(
@@ -34,15 +112,31 @@ class CourseDetailPage extends StatelessWidget {
           IconButton(
             tooltip: 'Edit Course',
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      EditCoursePage(course: course),
-                ),
-              );
-            },
+            onPressed: isSaving
+                ? null
+                : () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            EditCoursePage(course: course),
+                      ),
+                    );
+                  },
+          ),
+
+          // ==================== TAHAP 8 ====================
+          IconButton(
+            tooltip: 'Hapus Course',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: isSaving
+                ? null
+                : () {
+                    _confirmAndDelete(
+                      context,
+                      context.read<CourseProvider>(),
+                    );
+                  },
           ),
         ],
       ),

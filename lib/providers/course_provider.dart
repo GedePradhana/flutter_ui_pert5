@@ -82,6 +82,28 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
+  // ==================== TAHAP 8 ====================
+  // code opsional: kalau diisi, code tersebut juga dihapus dari
+  // favorites supaya tidak ada "data yatim" (favorit yang
+  // menunjuk ke course yang sudah tidak ada lagi).
+  Future<void> deleteCourse(int id, {String? code}) async {
+    isSaving = true;
+    notifyListeners();
+
+    try {
+      await repository.deleteCourse(id);
+
+      if (code != null) {
+        favorites.remove(code);
+      }
+
+      await loadCourses();
+    } finally {
+      isSaving = false;
+      notifyListeners();
+    }
+  }
+
   // ==================== SHARED STATE FAVORITES (TAHAP 5) ====================
   final Set<String> favorites = {};
 
