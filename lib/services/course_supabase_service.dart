@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/course.dart';
 import 'course_data_source.dart';
 
-// ==================== TAHAP 12 + TAHAP 13 + TAHAP 14 ====================
+// ==================== TAHAP 12 + 13 + 14 + 15 ====================
 // CourseSupabaseService: sumber data yang membaca dan menulis tabel
 // `courses` di Supabase (PostgreSQL). Class ini implements
 // CourseDataSource, sehingga bisa menggantikan REST API tanpa
@@ -54,8 +54,20 @@ class CourseSupabaseService implements CourseDataSource {
         .eq('id', id);
   }
 
-  // Sementara, agar kelas tetap dapat dikompilasi.
-  // Dikerjakan di Tahap 15.
+  // TAHAP 15: DELETE FROM courses WHERE id = :id
+  // - delete() menghapus row dari tabel.
+  // - eq('id', id) WAJIB ada sebagai filter. Tanpa filter ini,
+  //   DELETE akan menghapus SEMUA baris di tabel.
+  // - Tidak ada nilai kembalian (Future<void>), sama seperti
+  //   versi REST, sehingga CourseRepository dan CourseProvider
+  //   tidak perlu diubah.
+  // I Gede Pradhana Subawa Deningrat
+// 2415051030
   @override
-  Future<void> deleteCourse(int id) => throw UnimplementedError();
+  Future<void> deleteCourse(int id) async {
+    await supabase
+        .from('courses')
+        .delete()
+        .eq('id', id);
+  }
 }
