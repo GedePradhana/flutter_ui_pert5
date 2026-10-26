@@ -20,4 +20,9 @@ class CourseRepository {
   Future<List<Course>> getCourses() {
     return service.getCourses();
   }
+
+  // ==================== TAHAP 6 ====================
+  Future<Course> createCourse(Course course) {
+    return service.createCourse(course);
+  }
 }

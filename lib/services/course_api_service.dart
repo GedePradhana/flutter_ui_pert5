@@ -57,4 +57,31 @@ class CourseApiService {
         )
         .toList();
   }
+
+  // ==================== TAHAP 6 ====================
+  // POST ke endpoint latihan. Karena yang dikirim adalah
+  // course.toJson() (code/title/credits/status, field yang sama
+  // seperti contoh di worksheet), response dari JSONPlaceholder
+  // akan meng-echo balik field yang sama persis + id baru --
+  // jadi TIDAK perlu adapter seperti di getCourses().
+  //
+  // CATATAN: JSONPlaceholder adalah fake API; data yang "dibuat"
+  // di sini tidak benar-benar tersimpan di server (hilang lagi
+  // kalau di-refresh/di-reload dari awal). Ini sudah diperingatkan
+  // di materi Tahap 1.
+  Future<Course> createCourse(Course course) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/todos'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(course.toJson()),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return Course.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+    }
+
+    throw Exception('Gagal membuat course');
+  }
 }

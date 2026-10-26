@@ -8,6 +8,7 @@ import '../providers/course_provider.dart';
 import '../widgets/course_interaction_card.dart';
 import '../widgets/error_view.dart';
 import '../widgets/favorite_count_badge.dart';
+import 'add_course_page.dart';
 import 'counter_page.dart';
 import 'feedback_page.dart';
 
@@ -60,6 +61,19 @@ class CoursesPage extends StatelessWidget {
         ],
       ),
       body: _buildBody(context, provider),
+      // ==================== TAHAP 6 ====================
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Tambah Course',
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AddCoursePage(),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 

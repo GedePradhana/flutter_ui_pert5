@@ -39,6 +39,33 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
+  // ==================== TAHAP 6 (Pertemuan 7) ====================
+  // isSaving: flag terpisah dari isLoading, supaya "menyimpan data
+  // baru" dan "memuat daftar course" tidak saling tiban status-nya.
+  // Dipakai form untuk menonaktifkan tombol Simpan dan mencegah
+  // submit ganda (lihat Pertemuan 5 Tahap 16 Kasus D).
+  bool isSaving = false;
+
+  // Sengaja TIDAK menangkap try/catch di sini -- exception dibiarkan
+  // lempar ke pemanggil (screen), supaya screen bisa menampilkan
+  // SnackBar sukses/gagal sesuai hasilnya masing-masing.
+  Future<void> createCourse(Course course) async {
+    isSaving = true;
+    notifyListeners();
+
+    try {
+      await repository.createCourse(course);
+
+      // Refresh list dengan memuat ulang dari server (mengganti
+      // isi list), BUKAN menambahkan item baru secara manual ke
+      // `courses` -- sesuai instruksi worksheet.
+      await loadCourses();
+    } finally {
+      isSaving = false;
+      notifyListeners();
+    }
+  }
+
   // ==================== SHARED STATE FAVORITES (TAHAP 5) ====================
   final Set<String> favorites = {};
 
