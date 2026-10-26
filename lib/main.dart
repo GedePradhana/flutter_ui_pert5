@@ -14,7 +14,7 @@
 // - screens/       : halaman penuh (Home, Courses, Favorites, Detail, dst.)
 // - widgets/       : komponen UI kecil (card, badge favorit)
 //
-// ==================== TAHAP 10 ====================
+// ==================== TAHAP 10 .====================
 // Supabase.initialize() dipanggil sebelum runApp(), supaya client
 // Supabase siap dipakai sebelum widget tree dibangun.
 //
