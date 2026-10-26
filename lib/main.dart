@@ -12,9 +12,15 @@
 // - providers/     : CourseProvider (courses, isLoading, error, favorites)
 // - screens/       : halaman penuh (Home, Courses, Favorites, Detail, dst.)
 // - widgets/       : komponen UI kecil (card, badge favorit)
+//
+// ==================== TAHAP 10 ====================
+// Supabase.initialize() dipanggil sebelum runApp(), supaya client
+// Supabase siap dipakai sebelum widget tree dibangun.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'constants/supabase_config.dart';
 import 'providers/course_provider.dart';
 import 'repositories/course_repository.dart';
 import 'screens/main_navigation_page.dart';
@@ -24,7 +30,14 @@ import 'services/course_api_service.dart';
 // kalau dosen sudah memberi endpoint resmi.
 const String apiBaseUrl = 'https://jsonplaceholder.typicode.com';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => CourseProvider(
