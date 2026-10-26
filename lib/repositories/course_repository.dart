@@ -1,38 +1,33 @@
 import '../models/course.dart';
-import '../services/course_api_service.dart';
+import '../services/course_data_source.dart';
 
-// ==================== TAHAP 10 (Pertemuan 6) + TAHAP 4 (Pertemuan 7) ====================
+// ==================== TAHAP 10 (Pertemuan 6) + TAHAP 4 (Pertemuan 7) + TAHAP 9 ====================
 // CourseRepository: lapisan abstraksi antara state/business logic
 // dan sumber data. Pemanggil (CourseProvider) cukup tahu getCourses(),
 // tidak perlu tahu data berasal dari JSON, REST API, atau database.
 //
-// Dependency diganti dari CourseService (JSON lokal) menjadi
-// CourseApiService (REST API). CourseProvider di atasnya TIDAK
-// perlu diubah sama sekali karena tetap memanggil
-// repository.getCourses() seperti biasa.
+// Pada Tahap 9, dependency diganti dari CourseApiService (konkret)
+// menjadi CourseDataSource (kontrak/abstract class).
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
 class CourseRepository {
-  final CourseApiService service;
+  CourseRepository(this.dataSource);
 
-  CourseRepository(this.service);
+  final CourseDataSource dataSource;
 
   Future<List<Course>> getCourses() {
-    return service.getCourses();
+    return dataSource.getCourses();
   }
 
-  // ==================== TAHAP 6 ====================
   Future<Course> createCourse(Course course) {
-    return service.createCourse(course);
+    return dataSource.createCourse(course);
   }
 
-  // ==================== TAHAP 7 ====================
   Future<void> updateCourse(int id, Course course) {
-    return service.updateCourse(id, course);
+    return dataSource.updateCourse(id, course);
   }
 
-  // ==================== TAHAP 8 ====================
   Future<void> deleteCourse(int id) {
-    return service.deleteCourse(id);
+    return dataSource.deleteCourse(id);
   }
 }
