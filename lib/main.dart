@@ -33,7 +33,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'constants/supabase_config.dart';
 import 'providers/course_provider.dart';
 import 'repositories/course_repository.dart';
-import 'screens/main_navigation_page.dart';
+import 'screens/login_page.dart';
 import 'services/course_data_source.dart';
 import 'services/course_supabase_service.dart';
 
@@ -77,7 +77,8 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.white,
         ),
       ),
-      home: const MainNavigationPage(),
+      // WORKSHEET 9 Tahap 1: aplikasi dimulai dari LoginPage.
+      home: const LoginPage(),
     );
   }
 }
