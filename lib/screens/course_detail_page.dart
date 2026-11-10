@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../constants/student_info.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
+import '../providers/profile_provider.dart';
 import 'edit_course_page.dart';
 
 // TAHAP 13: halaman detail membaca status favorite dari
@@ -118,40 +119,48 @@ class CourseDetailPage extends StatelessWidget {
       (provider) => provider.isSaving,
     );
 
+    // WORKSHEET 9 (Praktik 4): tombol Edit/Hapus hanya untuk admin atau
+    // instructor (pemilik/RLS ditambahkan Tahap 5). Ini baru pengamanan UI.
+    final canManage = context.select<ProfileProvider, bool>(
+      (p) => p.canManageCourse(current),
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Course'),
         actions: [
-          // ==================== TAHAP 7 ====================
-          IconButton(
-            tooltip: 'Edit Course',
-            icon: const Icon(Icons.edit_outlined),
-            onPressed: isSaving
-                ? null
-                : () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            EditCoursePage(course: current),
-                      ),
-                    );
-                  },
-          ),
+          if (canManage) ...[
+            // ==================== TAHAP 7 ====================
+            IconButton(
+              tooltip: 'Edit Course',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: isSaving
+                  ? null
+                  : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EditCoursePage(course: current),
+                        ),
+                      );
+                    },
+            ),
 
-          // ==================== TAHAP 8 ====================
-          IconButton(
-            tooltip: 'Hapus Course',
-            icon: const Icon(Icons.delete_outline),
-            onPressed: isSaving
-                ? null
-                : () {
-                    _confirmAndDelete(
-                      context,
-                      context.read<CourseProvider>(),
-                    );
-                  },
-          ),
+            // ==================== TAHAP 8 ====================
+            IconButton(
+              tooltip: 'Hapus Course',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: isSaving
+                  ? null
+                  : () {
+                      _confirmAndDelete(
+                        context,
+                        context.read<CourseProvider>(),
+                      );
+                    },
+            ),
+          ],
         ],
       ),
       body: Center(
@@ -228,4 +237,4 @@ class CourseDetailPage extends StatelessWidget {
       ),
     );
   }
-}
+}

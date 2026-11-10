@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import 'course_detail_page.dart';
 import '../constants/student_info.dart';
 import '../providers/course_provider.dart';
+import '../providers/profile_provider.dart';
 import '../widgets/course_interaction_card.dart';
 import '../widgets/error_view.dart';
 import '../widgets/favorite_count_badge.dart';
+import '../widgets/role_guard.dart';
 import 'add_course_page.dart';
 import 'counter_page.dart';
 import 'feedback_page.dart';
@@ -69,17 +71,23 @@ class CoursesPage extends StatelessWidget {
       ),
       body: _buildBody(context, provider),
       // ==================== TAHAP 6 ====================
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'Tambah Course',
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddCoursePage(),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
+      // WORKSHEET 9 (Praktik 4): tombol tambah hanya untuk instructor/admin.
+      // Ini baru pengamanan UI; pengamanan sebenarnya ada di RLS database.
+      floatingActionButton: RoleGuard(
+        role: context.select<ProfileProvider, String>((p) => p.role),
+        allowed: const ['instructor', 'admin'],
+        child: FloatingActionButton(
+          tooltip: 'Tambah Course',
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddCoursePage(),
+              ),
+            );
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
@@ -144,4 +152,4 @@ class CoursesPage extends StatelessWidget {
       ],
     );
   }
-}
+}
