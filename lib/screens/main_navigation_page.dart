@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../providers/course_provider.dart';
 import '../providers/profile_provider.dart';
+import '../services/notification_service.dart';
+import 'course_detail_page.dart';
 import 'courses_page.dart';
 import 'favorites_page.dart';
 import 'home_page.dart';
@@ -39,7 +41,7 @@ class _MainNavigationPageState
 
   // ==================== WORKSHEET 9 ====================
   // Setelah user masuk (login baru ATAU session dipulihkan), muat profile
-  // + role dan data course.
+  // + role, muat course (RLS butuh user login), lalu siapkan notifikasi.
   @override
   void initState() {
     super.initState();
@@ -47,7 +49,36 @@ class _MainNavigationPageState
       if (!mounted) return;
       context.read<ProfileProvider>().load();
       context.read<CourseProvider>().loadCourses();
+
+      NotificationService.instance.onNotificationTap = _openFromNotification;
+      NotificationService.instance.init();
     });
+  }
+
+  @override
+  void dispose() {
+    NotificationService.instance.onNotificationTap = null;
+    super.dispose();
+  }
+
+  // Bonus: notifikasi ditekan -> buka detail course.
+  // Kirim data kustom `course_id` dari Firebase Console.
+  Future<void> _openFromNotification(Map<String, dynamic> data) async {
+    final id = int.tryParse(data['course_id']?.toString() ?? '');
+    if (id == null || !mounted) return;
+
+    final provider = context.read<CourseProvider>();
+    if (provider.courses.isEmpty) await provider.loadCourses();
+    if (!mounted) return;
+
+    final matches = provider.courses.where((c) => c.id == id);
+    if (matches.isEmpty) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CourseDetailPage(course: matches.first),
+      ),
+    );
   }
 
   @override

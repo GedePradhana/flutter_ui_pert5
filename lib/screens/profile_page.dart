@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../constants/student_info.dart';
 import '../providers/profile_provider.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -15,6 +16,8 @@ class ProfilePage extends StatelessWidget {
   // lalu membersihkan data provider dan mengarahkan ke LoginPage.
   Future<void> _logout(BuildContext context) async {
     try {
+      // Lepas token perangkat dari akun ini SEBELUM session dihapus.
+      await NotificationService.instance.unregisterDevice();
       await AuthService.instance.logout();
     } catch (e) {
       if (!context.mounted) return;
@@ -112,6 +115,15 @@ class ProfilePage extends StatelessWidget {
                 ),
               ],
 
+              // ---------- Status permission notifikasi (Tugas 6) ----------
+              ValueListenableBuilder<String>(
+                valueListenable: NotificationService.instance.permissionStatus,
+                builder: (context, status, _) => ListTile(
+                  leading: const Icon(Icons.notifications_outlined),
+                  title: const Text('Permission notifikasi'),
+                  subtitle: Text(status),
+                ),
+              ),
               const SizedBox(height: 8),
               FilledButton.icon(
                 onPressed: () => _logout(context),
