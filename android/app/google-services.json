@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "601210521480",
+    "project_id": "praktikummobile-13bad",
+    "storage_bucket": "praktikummobile-13bad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:601210521480:android:69f46b93acc609c8cb5c3d",
+        "android_client_info": {
+          "package_name": "com.example.flutter_ui_fundamentals"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNRzsejtPjgdsH7sIWxt1Fdi0723FDRW0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -32,12 +32,16 @@
 //                   LoginPage (session dipulihkan Supabase.initialize()).
 // - Listener sesi : event signedOut (logout / sesi berakhir) -> data
 //                   provider dibersihkan dan kembali ke LoginPage.
+// - Firebase      : hanya diinisialisasi di Android/iOS (supportsPush).
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_keys.dart';
 import 'constants/supabase_config.dart';
+import 'firebase_options.dart';
 import 'providers/course_provider.dart';
 import 'providers/profile_provider.dart';
 import 'repositories/course_repository.dart';
@@ -46,10 +50,19 @@ import 'screens/main_navigation_page.dart';
 import 'services/auth_service.dart';
 import 'services/course_data_source.dart';
 import 'services/course_supabase_service.dart';
+import 'services/notification_service.dart';
 import 'services/profile_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Firebase (FCM) hanya untuk Android/iOS.
+  if (supportsPush) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   await Supabase.initialize(
     url: supabaseUrl,

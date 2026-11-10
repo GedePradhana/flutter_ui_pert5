@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dibutuhkan agar aplikasi dapat mengakses Supabase pada build release -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Worksheet 9: izin notifikasi untuk Android 13 ke atas -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="flutter_ui_fundamentals"
         android:name="${applicationName}"
