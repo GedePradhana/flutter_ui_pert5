@@ -104,6 +104,17 @@ class CourseProvider extends ChangeNotifier {
     }
   }
 
+  // ==================== WORKSHEET 9 ====================
+  // Dipanggil saat logout supaya data user sebelumnya tidak tersisa.
+  void reset() {
+    courses = [];
+    favorites.clear();
+    error = null;
+    isLoading = false;
+    isSaving = false;
+    notifyListeners();
+  }
+
   // ==================== SHARED STATE FAVORITES (TAHAP 5) ====================
   final Set<String> favorites = {};
 
@@ -129,4 +140,4 @@ class CourseProvider extends ChangeNotifier {
         .where((course) => favorites.contains(course.code))
         .toList();
   }
-}
+}

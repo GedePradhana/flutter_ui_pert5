@@ -1,8 +1,11 @@
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
 import 'package:flutter/material.dart';
-import 'favorites_page.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/course_provider.dart';
 import 'courses_page.dart';
+import 'favorites_page.dart';
 import 'home_page.dart';
 import 'profile_page.dart';
 
@@ -32,6 +35,18 @@ class MainNavigationPage extends StatefulWidget {
 class _MainNavigationPageState
     extends State<MainNavigationPage> {
   int currentIndex = 0;
+
+  // ==================== WORKSHEET 9 ====================
+  // Setelah user masuk (login baru ATAU session dipulihkan), muat profile
+  // data course (nanti memakai RLS yang butuh user login).
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CourseProvider>().loadCourses();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,4 +134,4 @@ class _MainNavigationPageState
           : null,
     );
   }
-}
+}
