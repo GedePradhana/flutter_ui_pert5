@@ -1,8 +1,10 @@
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../constants/student_info.dart';
+import '../providers/profile_provider.dart';
 import '../services/auth_service.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -24,6 +26,9 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<ProfileProvider>();
+    final profile = provider.profile;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
@@ -73,6 +78,40 @@ class ProfilePage extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
+              const Divider(),
+
+              // ---------- Akun yang sedang login (Tugas 3) ----------
+              if (provider.isLoading)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: CircularProgressIndicator(),
+                )
+              else if (profile == null)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    provider.error ?? 'Gagal memuat profil',
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: const Text('Nama'),
+                  subtitle: Text(profile.name.isEmpty ? '-' : profile.name),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.email_outlined),
+                  title: const Text('Email'),
+                  subtitle: Text(profile.email),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.badge_outlined),
+                  title: const Text('Role'),
+                  subtitle: Text(profile.role),
+                ),
+              ],
+
               const SizedBox(height: 8),
               FilledButton.icon(
                 onPressed: () => _logout(context),

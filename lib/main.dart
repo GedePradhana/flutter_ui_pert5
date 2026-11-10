@@ -39,12 +39,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app_keys.dart';
 import 'constants/supabase_config.dart';
 import 'providers/course_provider.dart';
+import 'providers/profile_provider.dart';
 import 'repositories/course_repository.dart';
 import 'screens/login_page.dart';
 import 'screens/main_navigation_page.dart';
 import 'services/auth_service.dart';
 import 'services/course_data_source.dart';
 import 'services/course_supabase_service.dart';
+import 'services/profile_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +67,7 @@ Future<void> main() async {
   // Data course TIDAK dimuat di sini: RLS mewajibkan user login, jadi
   // pemuatan dilakukan MainNavigationPage setelah user masuk.
   final courseProvider = CourseProvider(repository);
+  final profileProvider = ProfileProvider(ProfileService());
 
   // Mendengarkan perubahan session: berguna saat logout, atau saat
   // session berakhir / logout dari tempat lain.
@@ -72,6 +75,7 @@ Future<void> main() async {
     debugPrint('Auth event: ${data.event}');
     if (data.event == AuthChangeEvent.signedOut) {
       courseProvider.reset();
+      profileProvider.clear();
       navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginPage()),
         (route) => false,
@@ -80,8 +84,11 @@ Future<void> main() async {
   });
 
   runApp(
-    ChangeNotifierProvider<CourseProvider>.value(
-      value: courseProvider,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<CourseProvider>.value(value: courseProvider),
+        ChangeNotifierProvider<ProfileProvider>.value(value: profileProvider),
+      ],
       child: const MyApp(),
     ),
   );

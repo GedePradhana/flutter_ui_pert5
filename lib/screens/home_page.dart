@@ -1,14 +1,32 @@
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../constants/student_info.dart';
+import '../providers/profile_provider.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  String _roleLabel(String role) {
+    switch (role) {
+      case 'instructor':
+        return 'Instructor';
+      case 'admin':
+        return 'Admin';
+      case 'student':
+        return 'Student';
+      default:
+        return '-';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // WORKSHEET 9: tampilkan identitas user yang sedang login.
+    final profile = context.watch<ProfileProvider>().profile;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
@@ -46,10 +64,20 @@ class HomePage extends StatelessWidget {
                 style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Selamat datang di Course Explorer.',
+              Text(
+                profile == null
+                    ? 'Selamat datang di Course Explorer.'
+                    : 'Selamat datang, '
+                        '${profile.name.isEmpty ? profile.email : profile.name}.',
                 textAlign: TextAlign.center,
               ),
+              if (profile != null) ...[
+                const SizedBox(height: 8),
+                Chip(
+                  avatar: const Icon(Icons.badge, size: 18),
+                  label: Text('Role: ${_roleLabel(profile.role)}'),
+                ),
+              ],
             ],
           ),
         ),

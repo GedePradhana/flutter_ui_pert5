@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/course_provider.dart';
+import '../providers/profile_provider.dart';
 import 'courses_page.dart';
 import 'favorites_page.dart';
 import 'home_page.dart';
@@ -38,12 +39,13 @@ class _MainNavigationPageState
 
   // ==================== WORKSHEET 9 ====================
   // Setelah user masuk (login baru ATAU session dipulihkan), muat profile
-  // data course (nanti memakai RLS yang butuh user login).
+  // + role dan data course.
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      context.read<ProfileProvider>().load();
       context.read<CourseProvider>().loadCourses();
     });
   }
