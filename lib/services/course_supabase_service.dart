@@ -133,9 +133,20 @@ class CourseSupabaseService implements CourseDataSource {
   @override
   Future<Course> createCourse(Course course) {
     return _guard(() async {
+      // WORKSHEET 9: owner_id = user yang login. Policy RLS INSERT
+      // mewajibkan owner_id sama dengan auth.uid().
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw const AppException(
+          AppErrorType.unauthorized,
+          'Anda belum login. Silakan login terlebih dahulu.',
+          statusCode: 401,
+        );
+      }
+
       final row = await supabase
           .from('courses')
-          .insert(course.toJson())
+          .insert({...course.toJson(), 'owner_id': user.id})
           .select()
           .single();
 
@@ -196,4 +207,4 @@ class CourseSupabaseService implements CourseDataSource {
       }
     });
   }
-}
+}

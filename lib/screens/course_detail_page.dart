@@ -1,5 +1,6 @@
 // I Gede Pradhana Subawa Deningrat
 // 2415051030
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +8,7 @@ import '../constants/student_info.dart';
 import '../models/course.dart';
 import '../providers/course_provider.dart';
 import '../providers/profile_provider.dart';
+import '../services/security_test_service.dart';
 import 'edit_course_page.dart';
 
 // TAHAP 13: halaman detail membaca status favorite dari
@@ -95,6 +97,34 @@ class CourseDetailPage extends StatelessWidget {
     }
   }
 
+  // ==================== WORKSHEET 9 (Praktik 6) ====================
+  // Hanya muncul saat debug dan hanya untuk course yang BUKAN milik user.
+  Future<void> _runSecurityTest(BuildContext context, Course current) async {
+    final id = current.id;
+    if (id == null) return;
+
+    final logs = await runSecurityTest(
+      courseId: id,
+      ownerId: current.ownerId,
+    );
+    debugPrint(logs.join('\n'));
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hasil Security Test (RLS)'),
+        content: Text(logs.join('\n\n')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // TAHAP 16: ambil versi terbaru course ini dari provider.
@@ -120,7 +150,7 @@ class CourseDetailPage extends StatelessWidget {
     );
 
     // WORKSHEET 9 (Praktik 4): tombol Edit/Hapus hanya untuk admin atau
-    // instructor (pemilik/RLS ditambahkan Tahap 5). Ini baru pengamanan UI.
+    // instructor PEMILIK course. Pengamanan sebenarnya tetap di RLS.
     final canManage = context.select<ProfileProvider, bool>(
       (p) => p.canManageCourse(current),
     );
@@ -129,6 +159,13 @@ class CourseDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Detail Course'),
         actions: [
+          // Debug saja: uji apakah RLS menolak operasi pada data orang lain.
+          if (kDebugMode && !canManage)
+            IconButton(
+              tooltip: 'Security test (debug)',
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () => _runSecurityTest(context, current),
+            ),
           if (canManage) ...[
             // ==================== TAHAP 7 ====================
             IconButton(

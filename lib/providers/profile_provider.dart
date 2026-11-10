@@ -25,12 +25,12 @@ class ProfileProvider extends ChangeNotifier {
   bool get canCreateCourse =>
       profile != null && (profile!.isInstructor || profile!.isAdmin);
 
-  /// Boleh mengubah/menghapus course.
-  /// Tahap 4: berdasarkan role saja. Kepemilikan (owner) ditambahkan di Tahap 5.
+  /// Boleh mengubah/menghapus: admin (semua) atau instructor pemilik course.
   bool canManageCourse(Course course) {
     final p = profile;
     if (p == null) return false;
-    return p.isInstructor || p.isAdmin;
+    if (p.isAdmin) return true;
+    return p.isInstructor && course.ownerId != null && course.ownerId == p.id;
   }
 
   Future<void> load() async {

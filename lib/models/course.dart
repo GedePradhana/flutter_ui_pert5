@@ -16,6 +16,9 @@
 //   ('done', 'active', 'planned') dan dengan contoh di worksheet.
 class Course {
   final int? id;
+  // WORKSHEET 9: id pemilik (auth.users.id), dipakai untuk authorization UI
+  // dan RLS. Nullable karena data REST/lokal tidak punya owner.
+  final String? ownerId;
   final String code;
   final String title;
   final int credits;
@@ -23,6 +26,7 @@ class Course {
 
   const Course({
     this.id,
+    this.ownerId,
     required this.code,
     required this.title,
     required this.credits,
@@ -32,6 +36,7 @@ class Course {
   factory Course.fromJson(Map<String, dynamic> json) {
     return Course(
       id: json['id'] as int?,
+      ownerId: json['owner_id'] as String?,
       code: json['code'] as String,
       title: json['title'] as String,
       credits: json['credits'] as int,
@@ -47,4 +52,4 @@ class Course {
         'credits': credits,
         'status': status,
       };
-}
+}
